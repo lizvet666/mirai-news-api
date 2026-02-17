@@ -513,4 +513,10 @@ app.post("/api/article/generate", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[mirai-news-api] listening on http://localhost:${PORT}`);
+  console.log(
+    "[mirai-news-api] env: image=" +
+      (NANOBANANA_ENDPOINT ? "OK" : "MISSING(NANOBANANA_ENDPOINT)") +
+      ", text=" +
+      (GEMINI_API_KEY ? "OK" : "MISSING(GEMINI_API_KEY)")
+  );
 });
