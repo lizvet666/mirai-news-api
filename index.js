@@ -217,6 +217,7 @@ app.post("/api/image/generate", async (req, res) => {
         detail.status === 400 &&
         /Unable to process input image/i.test(detail.detail || "");
       if (canRetryWithoutImage) {
+        console.warn("[image/generate] retrying without input image (provider rejected image)");
         const promptOnlyBody = {
           ...body,
           contents: [
@@ -228,6 +229,7 @@ app.post("/api/image/generate", async (req, res) => {
         };
         response = await sendRequest(promptOnlyBody);
       } else {
+        console.error("[image/generate] provider error", detail.status, detail.detail);
         res.status(502).json({
           ok: false,
           error: "nanobananapro request failed",
@@ -240,6 +242,7 @@ app.post("/api/image/generate", async (req, res) => {
 
     if (!response.ok) {
       const detail = await parseResponseDetail(response);
+      console.error("[image/generate] provider error (after retry)", detail.status, detail.detail);
       res.status(502).json({
         ok: false,
         error: "nanobananapro request failed",
@@ -252,10 +255,12 @@ app.post("/api/image/generate", async (req, res) => {
     data = await response.json();
     const imageDataUrl = normalizeImageResponse(data);
     if (!imageDataUrl) {
+      const sample = JSON.stringify(data).slice(0, 500);
+      console.error("[image/generate] no image in response, sample:", sample);
       res.status(502).json({
         ok: false,
         error: "nanobananapro response did not include a usable image",
-        provider_payload_sample: JSON.stringify(data).slice(0, 700)
+        provider_payload_sample: sample
       });
       return;
     }
