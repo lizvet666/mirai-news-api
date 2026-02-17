@@ -160,13 +160,21 @@ app.post("/api/image/generate", async (req, res) => {
     }
 
     const payload = req.body || {};
-    const promptText = [payload.prompts?.system || "", payload.prompts?.user || ""]
-      .join("\n\n")
-      .trim();
-    const negativeText = payload.prompts?.negative ? `\n\nNegative: ${payload.prompts.negative}` : "";
+    // 画像生成APIに必ず年齢指示を通す（子どもっぽい出力を防ぐ）
+    const adultReinforcement =
+      "CRITICAL: The person in the image MUST be shown as an ADULT, 25-35 years old, mature face and body. NOT a child. Same identity as the input photo but clearly aged up to adulthood. ";
+    const promptText =
+      adultReinforcement +
+      [payload.prompts?.system || "", payload.prompts?.user || ""]
+        .join("\n\n")
+        .trim();
+    const clientNegative = payload.prompts?.negative || "";
+    const serverNegative = "child, childlike, baby face, kid, toddler, infant look, youthful child face";
+    const negativeText = `\n\nNegative: ${[serverNegative, clientNegative].filter(Boolean).join(". ")}`;
     const inlineData = toInlineDataFromDataUrl(payload.input_image_data_url);
     const promptPart = { text: `${promptText}${negativeText}`.trim() };
-    const parts = inlineData ? [promptPart, { inlineData }] : [promptPart];
+    // 参照画像を先に送る（多くの画像編集APIは「画像→指示」の順を期待）
+    const parts = inlineData ? [{ inlineData }, promptPart] : [promptPart];
 
     const aspectRatio = payload.aspect_ratio || "16:9";
     const body = {
