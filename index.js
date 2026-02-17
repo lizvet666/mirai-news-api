@@ -176,7 +176,7 @@ app.post("/api/image/generate", async (req, res) => {
     // 参照画像を先に送る（多くの画像編集APIは「画像→指示」の順を期待）
     const parts = inlineData ? [{ inlineData }, promptPart] : [promptPart];
 
-    const aspectRatio = payload.aspect_ratio || "16:9";
+    // NANOBANANA/Gemini の REST API は imageGenerationConfig を認識しないため省略（デフォルトで画像生成）
     const body = {
       contents: [
         {
@@ -185,10 +185,7 @@ app.post("/api/image/generate", async (req, res) => {
         }
       ],
       generationConfig: {
-        responseModalities: ["IMAGE", "TEXT"],
-        imageGenerationConfig: {
-          aspectRatio: aspectRatio
-        }
+        responseModalities: ["IMAGE", "TEXT"]
       }
     };
 
